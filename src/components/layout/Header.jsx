@@ -1,26 +1,68 @@
-import { Search, Bell } from 'lucide-react';
+'use client';
+
+import { Search, ChevronDown, Sun } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 export default function Header() {
+    const [currentTime, setCurrentTime] = useState(new Date());
+
+    useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    const formatDate = (date) => {
+        return new Intl.DateTimeFormat('en-GB', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        }).format(date);
+    };
+
+    const formatTime = (date) => {
+        return new Intl.DateTimeFormat('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        }).format(date);
+    };
+
     return (
-        <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-white/10 bg-slate-900/50 backdrop-blur-xl px-6 transition-all">
-            <div className="flex items-center">
-                <h2 className="text-lg font-semibold text-white">Dashboard</h2>
+        <header className="sticky top-0 z-30 flex h-20 w-full items-center justify-between bg-white px-8 shadow-sm">
+            {/* Search Bar */}
+            <div className="relative w-96">
+                <input
+                    type="text"
+                    placeholder="Search for anything here.."
+                    className="w-full h-11 pl-4 pr-10 bg-[#f3f4f8] text-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500 text-sm"
+                />
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             </div>
 
-            <div className="flex items-center gap-4">
-                {/* Search */}
-                <div className="relative hidden md:block">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
-                        type="text"
-                        placeholder="Search medicines..."
-                        className="h-10 w-64 rounded-full border border-white/10 bg-white/5 pl-10 pr-4 text-sm text-white placeholder-slate-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 transition-all"
-                    />
+            {/* Right Section */}
+            <div className="flex items-center gap-8">
+                {/* Language Selector */}
+                <div className="flex items-center gap-2 text-gray-600 cursor-pointer">
+                    <span className="font-medium text-sm">文</span>
+                    <span className="text-sm font-medium">English (US)</span>
+                    <ChevronDown className="w-4 h-4" />
                 </div>
 
-                <button className="rounded-full p-2 text-slate-400 hover:bg-white/10 hover:text-white transition-colors">
-                    <Bell className="h-5 w-5" />
-                </button>
+                {/* Greeting & Time */}
+                <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center text-white">
+                        <Sun className="w-6 h-6 fill-current" />
+                    </div>
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-gray-800">Good Morning</span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                            {formatDate(currentTime)} <span className="mx-1">•</span> {formatTime(currentTime)}
+                        </div>
+                    </div>
+                </div>
             </div>
         </header>
     );

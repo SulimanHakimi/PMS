@@ -2,12 +2,32 @@
   "name": "pms",
   "version": "0.1.0",
   "private": true,
+  "main": "electron/main.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "electron-dev": "concurrently -k \"cross-env BROWSER=none npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
+    "dist": "next build && electron-builder"
   },
+  "build": {
+    "appId": "com.sheen.pms",
+    "productName": "Pharma One PMS",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "files": [
+      "electron/**/*",
+      "package.json",
+      "out/**/*"
+    ]
+  },
+  "author": "Sheen",
+  "description": "Pharmacy Management System Desktop App",
   "dependencies": {
     "clsx": "^2.1.1",
     "lucide-react": "^0.562.0",
@@ -19,8 +39,13 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron": "^39.2.7",
+    "electron-builder": "^26.4.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
-    "tailwindcss": "^4"
+    "tailwindcss": "^4",
+    "wait-on": "^9.0.3"
   }
 }

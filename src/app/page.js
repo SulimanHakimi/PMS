@@ -1,107 +1,231 @@
-import Sidebar from "@/components/layout/Sidebar";
-import Header from "@/components/layout/Header";
-import { DollarSign, Package, TrendingUp, AlertTriangle } from "lucide-react";
+import Link from "next/link";
+import {
+  ShieldCheck,
+  Banknote,
+  BriefcaseMedical,
+  AlertOctagon,
+  ChevronsRight,
+  ChevronDown
+} from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar />
-      <div className="pl-64">
-        <Header />
-        <main className="p-6">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <StatCard
-              title="Total Revenue"
-              value="$45,231.89"
-              trend="+20.1% from last month"
-              icon={DollarSign}
-              color="text-emerald-400"
-              bg="bg-emerald-400/10"
-            />
-            <StatCard
-              title="Medicines in Stock"
-              value="2,345"
-              trend="+180 new items"
-              icon={Package}
-              color="text-blue-400"
-              bg="bg-blue-400/10"
-            />
-            <StatCard
-              title="Sales Today"
-              value="$1,234.00"
-              trend="+19% from yesterday"
-              icon={TrendingUp}
-              color="text-purple-400"
-              bg="bg-purple-400/10"
-            />
-            <StatCard
-              title="Low Stock Alert"
-              value="12"
-              trend="Items below threshold"
-              icon={AlertTriangle}
-              color="text-amber-400"
-              bg="bg-amber-400/10"
-            />
-          </div>
+    <div className="p-8">
+      {/* Page Title Section */}
+      <div className="flex items-start justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+          <p className="text-gray-500 text-sm mt-1">A quick data overview of the inventory.</p>
+        </div>
+        <button className="px-5 py-2.5 bg-white border border-gray-200 rounded-md text-gray-600 font-medium text-sm flex items-center gap-2 shadow-sm hover:bg-gray-50 transition-colors">
+          Download Report
+          <ChevronDown className="w-4 h-4" />
+        </button>
+      </div>
 
-          <div className="mt-8 grid gap-6 md:grid-cols-2">
-            <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-              <h3 className="mb-4 text-lg font-semibold text-white">Recent Sales</h3>
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-center justify-between border-b border-white/5 pb-4 last:border-0 last:pb-0">
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-full bg-white/5 flex items-center justify-center text-lg">💊</div>
-                      <div>
-                        <p className="font-medium text-white">Paracetamol 500mg</p>
-                        <p className="text-sm text-slate-400">2 packs</p>
-                      </div>
-                    </div>
-                    <p className="font-medium text-emerald-400">+$12.50</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+      {/* Status Cards */}
+      <div className="grid grid-cols-4 gap-6 mb-8">
+        <StatusCard
+          icon={ShieldCheck}
+          iconColor="text-[#4caf50]"
+          borderColor="border-[#4caf50]"
+          bgButton="bg-[#4caf50]/10"
+          textButton="text-[#4caf50]"
+          title="Good"
+          subtitle="Inventory Status"
+          buttonText="View Detailed Report"
+          variant="green"
+          href="/inventory/medicines"
+        />
+        <StatusCard
+          icon={Banknote}
+          iconColor="text-[#ffc107]"
+          borderColor="border-[#ffc107]"
+          bgButton="bg-[#ffc107]/10"
+          textButton="text-[#ffc107]"
+          value="Rs. 8,55,875"
+          subtitle="Revenue : Jan 2022"
+          secondarySubtitle=""
+          buttonText="View Detailed Report"
+          variant="yellow"
+          href="/reports/sales"
+        />
+        <StatusCard
+          icon={BriefcaseMedical}
+          iconColor="text-[#2196f3]"
+          borderColor="border-[#2196f3]"
+          bgButton="bg-[#2196f3]/10"
+          textButton="text-[#2196f3]"
+          value="298"
+          subtitle="Medicines Available"
+          buttonText="Visit Inventory"
+          variant="blue"
+          href="/inventory/medicines"
+        />
+        <StatusCard
+          icon={AlertOctagon}
+          iconColor="text-[#f44336]"
+          borderColor="border-[#f44336]"
+          bgButton="bg-[#f44336]/10"
+          textButton="text-[#f44336]"
+          value="01"
+          subtitle="Medicine Shortage"
+          buttonText="Resolve Now"
+          variant="red"
+          href="/inventory/medicines"
+        />
+      </div>
 
-            <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-              <h3 className="mb-4 text-lg font-semibold text-white">Low Stock Items</h3>
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-center justify-between border-b border-white/5 pb-4 last:border-0 last:pb-0">
-                    <div className="flex items-center gap-4">
-                      <div className="h-2 w-2 rounded-full bg-amber-400"></div>
-                      <div>
-                        <p className="font-medium text-white">Amoxicillin 250mg</p>
-                        <p className="text-sm text-slate-400">In Stock: 5</p>
-                      </div>
-                    </div>
-                    <button className="text-xs px-3 py-1 rounded-full bg-primary-500/20 text-primary-300 hover:bg-primary-500/30">Restock</button>
-                  </div>
-                ))}
-              </div>
+      {/* Detailed Sections Grid */}
+      <div className="grid grid-cols-2 gap-6">
+        {/* Inventory Box */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-0 overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <h3 className="font-bold text-gray-800">Inventory</h3>
+            <div className="flex items-center text-xs font-semibold text-gray-500 cursor-pointer hover:text-[#009688]">
+              Go to Configuration <ChevronsRight className="w-4 h-4 ml-1" />
             </div>
           </div>
-        </main>
+          <div className="flex p-6">
+            <div className="flex-1 pr-4 border-r border-gray-100">
+              <div className="text-2xl font-bold text-gray-800 mb-1">298</div>
+              <div className="text-sm text-gray-500">Total no of Medicines</div>
+            </div>
+            <div className="flex-1 pl-6">
+              <div className="text-2xl font-bold text-gray-800 mb-1">24</div>
+              <div className="text-sm text-gray-500">Medicine Groups</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Report Box */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-0 overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <h3 className="font-bold text-gray-800">Quick Report</h3>
+            <div className="flex items-center text-xs font-medium text-gray-500 cursor-pointer">
+              January 2022 <ChevronDown className="w-4 h-4 ml-1" />
+            </div>
+          </div>
+          <div className="flex p-6">
+            <div className="flex-1 pr-4 border-r border-gray-100">
+              <div className="text-2xl font-bold text-gray-800 mb-1">70,856</div>
+              <div className="text-sm text-gray-500">Qty of Medicines Sold</div>
+            </div>
+            <div className="flex-1 pl-6">
+              <div className="text-2xl font-bold text-gray-800 mb-1">5,288</div>
+              <div className="text-sm text-gray-500">Invoices Generated</div>
+            </div>
+          </div>
+        </div>
+
+        {/* My Pharmacy Box */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-0 overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <h3 className="font-bold text-gray-800">My Pharmacy</h3>
+            <div className="flex items-center text-xs font-semibold text-gray-500 cursor-pointer hover:text-[#009688]">
+              Go to User Management <ChevronsRight className="w-4 h-4 ml-1" />
+            </div>
+          </div>
+          <div className="flex p-6">
+            <div className="flex-1 pr-4 border-r border-gray-100">
+              <div className="text-2xl font-bold text-gray-800 mb-1">04</div>
+              <div className="text-sm text-gray-500">Total no of Suppliers</div>
+            </div>
+            <div className="flex-1 pl-6">
+              <div className="text-2xl font-bold text-gray-800 mb-1">05</div>
+              <div className="text-sm text-gray-500">Total no of Users</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Customers Box */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-0 overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <h3 className="font-bold text-gray-800">Customers</h3>
+            <div className="flex items-center text-xs font-semibold text-gray-500 cursor-pointer hover:text-[#009688]">
+              Go to Customers Page <ChevronsRight className="w-4 h-4 ml-1" />
+            </div>
+          </div>
+          <div className="flex p-6">
+            <div className="flex-1 pr-4 border-r border-gray-100">
+              <div className="text-2xl font-bold text-gray-800 mb-1">845</div>
+              <div className="text-sm text-gray-500">Total no of Customers</div>
+            </div>
+            <div className="flex-1 pl-6">
+              <div className="text-2xl font-bold text-gray-800 mb-1">Adalimumab</div>
+              <div className="text-sm text-gray-500">Frequently bought item</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-function StatCard({ title, value, trend, icon: Icon, color, bg }) {
+function StatusCard({
+  icon: Icon,
+  iconColor,
+  borderColor,
+  bgButton,
+  textButton,
+  title,
+  value,
+  subtitle,
+  buttonText,
+  variant,
+  href
+}) {
+  // Defines border top usage based on variant if needed or simplified 
+  // The screen shows a border-top or colored button at bottom.
+  // Actually the design is a white card with a colored border at the very bottom?
+  // No, it looks like the button at the bottom is colored with bg-opacity.
+  // And there is a colored border-top? Let's check screenshot again.
+  // Screenshot 1: 
+  // Card 1 (Good): Border Top Green (or just button green).
+  // The visual hierarchy is: Icon + text centered. Bottom full width button.
+  // The card has a colored border top.
+
+  const borderColors = {
+    green: 'border-t-[#4caf50]',
+    yellow: 'border-t-[#ffc107]',
+    blue: 'border-t-[#2196f3]',
+    red: 'border-t-[#f44336]'
+  };
+
+  const buttonBgs = {
+    green: 'bg-[#4caf50]/20 hover:bg-[#4caf50]/30 text-[#4caf50]',
+    yellow: 'bg-[#ffc107]/20 hover:bg-[#ffc107]/30 text-[#ff8f00]', // Adjusted text for contrast
+    blue: 'bg-[#2196f3]/20 hover:bg-[#2196f3]/30 text-[#2196f3]',
+    red: 'bg-[#f44336]/20 hover:bg-[#f44336]/30 text-[#f44336]'
+  };
+
+  const iconBgs = {
+    green: 'border-2 border-[#4caf50]/20',
+    yellow: 'border-2 border-[#ffc107]/20',
+    blue: 'border-2 border-[#2196f3]/20',
+    red: 'border-2 border-[#f44336]/20',
+  }
+
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm hover:bg-white/10 transition-all">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-400">{title}</p>
-          <div className="mt-2 text-2xl font-bold text-white">{value}</div>
-        </div>
-        <div className={`rounded-xl ${bg} p-3 ${color}`}>
-          <Icon className="h-6 w-6" />
-        </div>
+    <div className={`bg-white rounded-lg shadow-sm pt-6 flex flex-col items-center border border-gray-100 ${borderColors[variant]} border-t-4`}>
+      <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${variant === 'green' ? 'text-[#4caf50] border-2 border-[#4caf50]' : ''} ${variant === 'yellow' ? 'text-[#ffc107] border-2 border-[#ffc107]' : ''} ${variant === 'blue' ? 'text-[#2196f3] border-2 border-[#2196f3]' : ''} ${variant === 'red' ? 'text-[#f44336] border-2 border-[#f44336]' : ''} bg-white`}>
+        <Icon className="w-6 h-6 stroke-2" />
       </div>
-      <div className="mt-4 flex items-center gap-2">
-        <span className="text-xs font-medium text-emerald-400">{trend}</span>
-      </div>
+
+      {title && <h3 className="text-lg font-bold text-gray-800 mb-1">{title}</h3>}
+      {value && <h3 className="text-xl font-bold text-gray-800 mb-1">{value}</h3>}
+
+      <p className="text-sm font-medium text-gray-600 mb-6">{subtitle}</p>
+
+      {href ? (
+        <Link href={href} className={`w-full py-2.5 font-medium text-sm transition-colors flex items-center justify-center gap-2 ${buttonBgs[variant]} rounded-b-lg mt-auto`}>
+          {buttonText} <ChevronsRight className="w-4 h-4" />
+        </Link>
+      ) : (
+        <button className={`w-full py-2.5 font-medium text-sm transition-colors flex items-center justify-center gap-2 ${buttonBgs[variant]} rounded-b-lg mt-auto`}>
+          {buttonText} <ChevronsRight className="w-4 h-4" />
+        </button>
+      )}
     </div>
   );
 }
