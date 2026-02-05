@@ -1,5 +1,8 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env.local') }); // Load env vars
+const dbHandlers = require('./db-handlers');
+
 const isDev = process.env.NODE_ENV !== 'production';
 
 let mainWindow;
@@ -30,7 +33,15 @@ function createWindow() {
     });
 }
 
-app.on('ready', createWindow);
+app.on('ready', () => {
+    createWindow();
+    // Connect to MongoDB
+    if (process.env.MONGODB_URI) {
+        dbHandlers.connectDB(process.env.MONGODB_URI);
+    } else {
+        console.warn('MONGODB_URI not found in environment variables');
+    }
+});
 
 app.on('window-all-closed', function () {
     if (process.platform !== 'darwin') {
@@ -48,4 +59,9 @@ app.on('activate', function () {
 ipcMain.on('app-status', (event, arg) => {
     console.log(arg); // prints "ping"
     event.reply('app-status-reply', 'pong');
+});
+
+// Database IPC Handlers
+Object.entries(dbHandlers.handlers).forEach(([channel, handler]) => {
+    ipcMain.handle(channel, handler);
 });

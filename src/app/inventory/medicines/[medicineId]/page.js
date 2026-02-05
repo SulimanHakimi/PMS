@@ -43,7 +43,7 @@ export default function MedicineDetail() {
                 <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 overflow-hidden relative">
                     <div className="flex justify-between items-center mb-6 pb-2 border-b border-gray-100">
                         <h3 className="font-bold text-gray-800">Inventory in Qty</h3>
-                        <button className="text-xs font-semibold text-gray-500 flex items-center hover:text-teal-600 transition-colors">
+                        <button className="text-xs font-semibold text-gray-500 flex items-center hover: transition-colors">
                             Send Stock Request <ChevronsRight className="w-4 h-4 ml-1" />
                         </button>
                     </div>

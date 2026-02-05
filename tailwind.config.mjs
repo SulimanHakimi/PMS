@@ -30,7 +30,7 @@ export default {
                 }
             },
             fontFamily: {
-                sans: ['var(--font-inter)'],
+                sans: ['var(--font-noto-naskh)', 'var(--font-inter)'],
                 heading: ['var(--font-poppins)'],
             },
             animation: {

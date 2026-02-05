@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  output: process.env.APP_ENV === 'electron' ? 'export' : undefined,
   images: { unoptimized: true },
 };
 

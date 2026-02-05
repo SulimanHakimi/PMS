@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "electron-dev": "concurrently -k \"cross-env BROWSER=none npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
-    "dist": "next build && electron-builder"
+    "dist": "node scripts/build-electron.js && electron-builder"
   },
   "build": {
     "appId": "com.sheen.pms",
@@ -30,6 +30,7 @@
   "description": "Pharmacy Management System Desktop App",
   "dependencies": {
     "clsx": "^2.1.1",
+    "dotenv": "^17.2.3",
     "lucide-react": "^0.562.0",
     "mongoose": "^9.1.2",
     "next": "16.1.1",
