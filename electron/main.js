@@ -11,12 +11,16 @@ function createWindow() {
     mainWindow = new BrowserWindow({
         width: 1280,
         height: 800,
+        title: 'Pharma One PMS',
+        autoHideMenuBar: true,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false, // For easier dev, modify for security in prod
             preload: path.join(__dirname, 'preload.js'),
         },
     });
+
+    mainWindow.setMenuBarVisibility(false);
 
     const startUrl = isDev
         ? 'http://localhost:3000'

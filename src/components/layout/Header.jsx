@@ -1,10 +1,10 @@
 'use client';
 
-import { Search, ChevronDown, Sun, LogOut } from 'lucide-react';
+import { Search, ChevronDown, Sun, LogOut, Menu, Bell } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 
-export default function Header() {
+export default function Header({ toggleSidebar }) {
     const { user, logout } = useAuth();
     const [currentTime, setCurrentTime] = useState(null);
 
@@ -34,39 +34,40 @@ export default function Header() {
     };
 
     return (
-        <header className="sticky top-0 z-30 flex h-20 w-full items-center justify-between bg-white px-8 shadow-sm">
-            {/* Search Bar */}
-            <div className="relative w-96">
-                <input
-                    type="text"
-                    placeholder="جستجو کنید..."
-                    className="w-full h-11 pr-4 pl-10 bg-[#f3f4f8] text-gray-600 rounded-md focus:outline-none focus:ring-1 focus:ring-teal-500 text-sm font-sans"
-                />
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <header className="sticky top-0 z-30 flex h-20 w-full items-center justify-between bg-white px-4 md:px-8 shadow-sm">
+            {/* Left Section: Mobile Menu & Search */}
+            <div className="flex items-center gap-4 flex-1">
+                {/* Mobile Menu Toggle */}
+                <button
+                    onClick={toggleSidebar}
+                    className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg lg:hidden"
+                >
+                    <Menu className="w-6 h-6" />
+                </button>
+
+                {/* Search Bar - Hidden on very small screens, responsive width */}
+                <div className="relative w-full max-w-md hidden sm:block">
+                    <input
+                        type="text"
+                        placeholder="جستجو کنید..."
+                        className="w-full h-11 pr-10 pl-4 bg-[#f3f4f8] text-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 text-sm font-sans transition-all"
+                    />
+                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                </div>
             </div>
 
             {/* Right Section */}
-            <div className="flex items-center gap-8">
-                {/* Language Selector */}
-                <div className="flex items-center gap-2 text-gray-600 cursor-pointer">
-                    <span className="font-medium text-sm">文</span>
-                    <span className="text-sm font-medium">دری (AF)</span>
-                    <ChevronDown className="w-4 h-4" />
-                </div>
-
-                {/* Greeting & Time */}
-                <div className="flex items-center gap-6">
-                    <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center text-white">
-                            <Sun className="w-6 h-6 fill-current" />
-                        </div>
+            <div className="flex items-center gap-3 md:gap-8">
+                {/* Time & Greetings - Responsive visibility */}
+                <div className="hidden lg:flex items-center gap-6">
+                    <div className="flex items-start gap-3 border-l border-gray-100 pl-6 text-right">
                         <div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 justify-end">
                                 <span className="text-sm font-bold text-gray-800">
                                     {user?.username ? `${user.username} خوش آمدید` : 'خوش آمدید'}
                                 </span>
                             </div>
-                            <div className="text-xs text-gray-500 mt-0.5 min-h-[1.5em] flex gap-1 items-center">
+                            <div className="text-[10px] md:text-xs text-gray-500 mt-0.5 min-h-[1.5em] flex gap-1 items-center justify-end">
                                 {currentTime && (
                                     <>
                                         <span>{formatDate(currentTime)}</span>
@@ -76,16 +77,32 @@ export default function Header() {
                                 )}
                             </div>
                         </div>
+                        <div className="w-10 h-10 rounded-full bg-yellow-50 flex items-center justify-center text-yellow-600">
+                            <Sun className="w-6 h-6 fill-current" />
+                        </div>
                     </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-2 md:gap-4">
+                    {/* Language/Other Icons for mobile */}
+                    <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-full sm:hidden">
+                        <Search className="w-5 h-5" />
+                    </button>
+
+                    <button className="relative p-2 text-gray-500 hover:bg-gray-100 rounded-full">
+                        <Bell className="w-5 h-5" />
+                        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                    </button>
 
                     {/* Logout Button */}
                     <button
                         onClick={logout}
-                        className="p-2 text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1 text-sm font-medium border-r border-gray-100 pr-4"
+                        className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50/50 rounded-lg transition-all flex items-center gap-2 text-sm font-medium"
                         title="خروج از سیستم"
                     >
                         <LogOut className="w-5 h-5" />
-                        <span>خروج</span>
+                        <span className="hidden md:inline">خروج</span>
                     </button>
                 </div>
             </div>

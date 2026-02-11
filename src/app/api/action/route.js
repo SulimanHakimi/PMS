@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
+// Force reload
 import dbConnect from '@/lib/db';
 import Medicine from '@/models/Medicine';
 import Group from '@/models/Group';
 import Supplier from '@/models/Supplier';
 import Customer from '@/models/Customer';
 import Invoice from '@/models/Invoice';
-// Create a User model in src/models if not exists, but for now we can mock or use direct if needed.
-// However, since db-handlers.js requires ./models/User, I should ensure src/models/User.js exists too.
-// I'll check/create that first in the next step.
+import User from '@/models/User';
+import Settings from '@/models/Settings';
+import VisitorChat from '@/models/VisitorChat';
 
 // Define handlers here (mirroring electron/db-handlers.js)
 const handlers = {
@@ -16,13 +17,36 @@ const handlers = {
         const distinctGroups = await Medicine.distinct('group');
         const shortageCount = await Medicine.countDocuments({ stock: { $lt: 30 } });
         const totalSuppliers = await Supplier.countDocuments({});
+
+        // Calculate Revenue and Sales
+        const allInvoices = await Invoice.find({}, { totalAmount: 1, items: 1 });
+        const revenue = allInvoices.reduce((sum, inv) => sum + (inv.totalAmount || 0), 0);
+        let qtySold = 0;
+        allInvoices.forEach(inv => {
+            if (inv.items && Array.isArray(inv.items)) {
+                inv.items.forEach(item => qtySold += (item.quantity || 0));
+            }
+        });
+
         return {
             totalMedicines,
             totalGroups: distinctGroups.length,
             shortageCount,
             suppliers: totalSuppliers,
-            revenue: 0, qtySold: 0, invoices: 0, users: 0, customers: 0
+            revenue,
+            qtySold,
+            invoices: allInvoices.length,
+            users: await User.countDocuments({}),
+            customers: await Customer.countDocuments({})
         };
+    },
+    'get-users': async () => {
+        try {
+            const users = await User.find({}, { password: 0 }).sort({ username: 1 }).lean();
+            return JSON.parse(JSON.stringify(users));
+        } catch (error) {
+            return [];
+        }
     },
     'get-medicines': async () => {
         // Fix old records missing price fields (using raw collection to bypass schema filtering)
@@ -219,6 +243,62 @@ const handlers = {
             return { success: false, error: error.message };
         }
     },
+    'get-notifications': async () => {
+        try {
+            const notifications = [];
+
+            // 1. Low Stock Alerts
+            const shortages = await Medicine.find({ stock: { $lt: 30 } }).limit(20).lean();
+            shortages.forEach(med => {
+                notifications.push({
+                    id: `shortage-${med._id}`,
+                    type: 'warning',
+                    title: 'کمبود موجودی',
+                    message: `دوا ${med.name} رو به اتمام است (موجودی: ${med.stock})`,
+                    time: med.updatedAt || new Date(),
+                    link: '/inventory/medicines'
+                });
+            });
+
+            // 2. Recent Sales
+            const recentSales = await Invoice.find({}).sort({ createdAt: -1 }).limit(5).lean();
+            recentSales.forEach(inv => {
+                notifications.push({
+                    id: `sale-${inv._id}`,
+                    type: 'success',
+                    title: 'فروش جدید',
+                    message: `فکتور #${inv.invoiceNumber} به مبلغ ${inv.totalAmount} ثبت شد.`,
+                    time: inv.createdAt,
+                    link: '/sales/list'
+                });
+            });
+
+            return JSON.parse(JSON.stringify(notifications.sort((a, b) => new Date(b.time) - new Date(a.time))));
+        } catch (error) {
+            return [];
+        }
+    },
+    'update-customer': async (data) => {
+        try {
+            const { _id, ...updateData } = data;
+            const updatedCustomer = await Customer.findByIdAndUpdate(
+                _id,
+                updateData,
+                { new: true, runValidators: true }
+            );
+            return { success: true, customer: JSON.parse(JSON.stringify(updatedCustomer)) };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    },
+    'delete-customer': async (customerId) => {
+        try {
+            await Customer.findByIdAndDelete(customerId);
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    },
 
     // Invoice Handlers
     'get-invoices': async () => {
@@ -240,6 +320,7 @@ const handlers = {
                 data.invoiceNumber = `INV-${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}-${(count + 1).toString().padStart(4, '0')}`;
             }
 
+            const enrichedItems = [];
             for (const item of data.items) {
                 const medicine = await Medicine.findOne({ medicineId: item.medicineId });
                 if (!medicine) throw new Error(`Medicine ${item.name} not found`);
@@ -249,9 +330,20 @@ const handlers = {
                     { medicineId: item.medicineId },
                     { $inc: { stock: -item.quantity } }
                 );
+
+                enrichedItems.push({
+                    ...item,
+                    buyPrice: medicine.buyPrice || 0
+                });
             }
 
-            const invoice = await Invoice.create(data);
+            const invoiceData = {
+                ...data,
+                items: enrichedItems,
+                createdBy: data.createdBy || 'admin'
+            };
+
+            const invoice = await Invoice.create(invoiceData);
 
             if (data.customerName && data.customerPhone) {
                 await Customer.findOneAndUpdate(
@@ -272,6 +364,156 @@ const handlers = {
             return JSON.parse(JSON.stringify(invoice));
         } catch (error) {
             return null;
+        }
+    },
+    'delete-user': async (userId) => {
+        try {
+            if (!userId) return { success: false, error: 'User ID is required' };
+            await User.findByIdAndDelete(userId);
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    },
+    'get-settings': async () => {
+        try {
+            const settings = await Settings.findOne();
+            if (settings) {
+                return JSON.parse(JSON.stringify(settings));
+            } else {
+                const newSettings = await Settings.create({});
+                return JSON.parse(JSON.stringify(newSettings));
+            }
+        } catch (error) {
+            return {
+                pharmacyName: 'Sheen Pharma',
+                address: '',
+                phone: '',
+                email: '',
+                currency: 'AFN',
+                taxRate: 0,
+                receiptFooter: 'Thanks for your visit!'
+            };
+        }
+    },
+    'update-settings': async (data) => {
+        try {
+            const settings = await Settings.findOneAndUpdate({}, data, { new: true, upsert: true });
+            return { success: true, settings: JSON.parse(JSON.stringify(settings)) };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    },
+    'backup-data': async () => {
+        try {
+            const medicines = await Medicine.find({}).lean();
+            const invoices = await Invoice.find({}).lean();
+            const customers = await Customer.find({}).lean();
+            const suppliers = await Supplier.find({}).lean();
+            const groups = await Group.find({}).lean();
+
+            const backup = {
+                medicines,
+                invoices,
+                customers,
+                suppliers,
+                groups,
+                timestamp: new Date().toISOString()
+            };
+
+            return { success: true, data: JSON.stringify(backup, null, 2) };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    },
+    // Chat Handlers
+    'get-chats': async () => {
+        try {
+            const chats = await VisitorChat.find({}).sort({ lastMessageTime: -1 }).lean();
+            return JSON.parse(JSON.stringify(chats));
+        } catch (error) {
+            console.error('get-chats error:', error);
+            return [];
+        }
+    },
+    'send-message': async ({ visitorId, text, sender }) => {
+        try {
+            const chat = await VisitorChat.findOne({ visitorId });
+            if (!chat) return { success: false, error: 'Chat not found' };
+
+            const newMessage = {
+                sender,
+                text,
+                timestamp: new Date(),
+                read: sender === 'admin'
+            };
+
+            chat.messages.push(newMessage);
+            chat.lastMessage = text;
+            chat.lastMessageTime = new Date();
+            if (sender === 'visitor') {
+                chat.unreadCount += 1;
+            }
+
+            await chat.save();
+            return { success: true, chat: JSON.parse(JSON.stringify(chat)) };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    },
+    'mark-chat-read': async (visitorId) => {
+        try {
+            await VisitorChat.findOneAndUpdate(
+                { visitorId },
+                { $set: { unreadCount: 0, 'messages.$[].read': true } }
+            );
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    },
+    'seed-chats': async () => {
+        try {
+            const count = await VisitorChat.countDocuments();
+            if (count > 0) return { success: true, message: 'Already seeded' };
+
+            const sampleChats = [
+                {
+                    visitorName: 'احمد رسولی',
+                    visitorId: 'v1',
+                    status: 'online',
+                    location: 'Kabul, AF',
+                    device: 'Chrome / Windows',
+                    lastMessage: 'سلام، آیا داروی آموکسی سیلین موجود دارید؟',
+                    lastMessageTime: new Date(Date.now() - 1000 * 60 * 5),
+                    unreadCount: 1,
+                    messages: [
+                        { sender: 'visitor', text: 'سلام، وقت بخیر', timestamp: new Date(Date.now() - 1000 * 60 * 10) },
+                        { sender: 'admin', text: 'سلام، خوش آمدید. چطور می‌توانم کمک‌تان کنم؟', timestamp: new Date(Date.now() - 1000 * 60 * 8) },
+                        { sender: 'visitor', text: 'سلام، آیا داروی آموکسی سیلین موجود دارید؟', timestamp: new Date(Date.now() - 1000 * 60 * 5) }
+                    ]
+                },
+                {
+                    visitorName: 'مریم ابراهیمی',
+                    visitorId: 'v2',
+                    status: 'offline',
+                    location: 'Herat, AF',
+                    device: 'Safari / iPhone',
+                    lastMessage: 'تشکر از راهنمایی‌تان.',
+                    lastMessageTime: new Date(Date.now() - 1000 * 60 * 60),
+                    unreadCount: 0,
+                    messages: [
+                        { sender: 'visitor', text: 'قیمت شربت سرفه چقدر است؟', timestamp: new Date(Date.now() - 1000 * 60 * 70) },
+                        { sender: 'admin', text: 'قیمت آن ۱۵۰ افغانی می‌باشد.', timestamp: new Date(Date.now() - 1000 * 60 * 65) },
+                        { sender: 'visitor', text: 'تشکر از راهنمایی‌تان.', timestamp: new Date(Date.now() - 1000 * 60 * 60) }
+                    ]
+                }
+            ];
+
+            await VisitorChat.insertMany(sampleChats);
+            return { success: true, message: 'Sample chats seeded' };
+        } catch (error) {
+            return { success: false, error: error.message };
         }
     }
 };

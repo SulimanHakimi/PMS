@@ -7,8 +7,8 @@ const poppins = Poppins({ weight: ['400', '500', '600', '700'], subsets: ["latin
 const notoNaskh = Noto_Naskh_Arabic({ subsets: ["arabic"], variable: "--font-noto-naskh" });
 
 export const metadata = {
-  title: "PMS - Pharmacy Management System",
-  description: "Advanced Pharmacy Management System",
+  title: "Sheen Pharma - Pharmacy Management System",
+  description: "Advanced Sheen Pharma Pharmacy Management System",
 };
 
 import { AuthProvider } from "@/context/AuthContext";

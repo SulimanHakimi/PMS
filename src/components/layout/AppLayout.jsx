@@ -2,7 +2,7 @@
 import { usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
 import Header from './Header';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { OfflineQueue } from '@/lib/offline-sync';
 import { invokeIPC } from '@/lib/ipc';
 import { useAuth } from '@/context/AuthContext';
@@ -13,6 +13,12 @@ export default function AppLayout({ children }) {
     const isLoginPage = pathname === '/login';
     const { user, loading } = useAuth();
     const router = useRouter();
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+    useEffect(() => {
+        // Close sidebar on route change (mobile)
+        setIsSidebarOpen(false);
+    }, [pathname]);
 
     useEffect(() => {
         // Redirection logic
@@ -67,14 +73,25 @@ export default function AppLayout({ children }) {
     }
 
     return (
-        <div className="min-h-screen flex">
-            <Sidebar />
-            <div className="flex-1 flex flex-col mr-64 min-h-screen transition-all">
-                <Header />
-                <main className="flex-1 overflow-x-hidden">
+        <div className="min-h-screen flex bg-[#f8fafc]">
+            {/* Sidebar with toggle state */}
+            <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
+
+            {/* Main Content */}
+            <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${isSidebarOpen ? 'mr-0' : 'lg:mr-64'}`}>
+                <Header toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+                <main className="flex-1 p-4 lg:p-8 overflow-x-hidden">
                     {children}
                 </main>
             </div>
+
+            {/* Backdrop for mobile */}
+            {isSidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+                    onClick={() => setIsSidebarOpen(false)}
+                />
+            )}
         </div>
     );
 }

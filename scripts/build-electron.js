@@ -20,7 +20,7 @@ if (fs.existsSync(API_DIR)) {
 try {
     // Run next build
     console.log('Running Next.js Build...');
-    execSync('npx cross-env APP_ENV=electron next build', { stdio: 'inherit' });
+    execSync('npx cross-env APP_ENV=electron next build --webpack', { stdio: 'inherit' });
     console.log('Build successful.');
 } catch (error) {
     console.error('Build failed:', error.message);

@@ -5,6 +5,7 @@ const InvoiceItemSchema = new mongoose.Schema({
     name: String,
     quantity: Number,
     unitPrice: Number,
+    buyPrice: Number,
     totalPrice: Number,
     instructions: String, // way to use
 });
@@ -33,6 +34,10 @@ const InvoiceSchema = new mongoose.Schema({
     totalAmount: {
         type: Number,
         required: true
+    },
+    createdBy: {
+        type: String,
+        default: 'admin'
     },
     date: {
         type: Date,

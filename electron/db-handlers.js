@@ -5,6 +5,7 @@ const User = require('./models/User');
 const Supplier = require('./models/Supplier');
 const Customer = require('./models/Customer');
 const Invoice = require('./models/Invoice');
+const VisitorChat = require('./models/VisitorChat');
 
 let isConnected = false;
 
@@ -27,17 +28,42 @@ const handlers = {
         const shortageCount = await Medicine.countDocuments({ stock: { $lt: 30 } });
         const totalSuppliers = await Supplier.countDocuments({});
 
+        // Calculate Revenue and Sales
+        // Calculate Revenue and Sales
+        const allInvoices = await Invoice.find({}, { totalAmount: 1, items: 1 });
+
+        let revenue = 0;
+        let totalCost = 0;
+        let qtySold = 0;
+
+        // Need to refetch all medicines to map buyPrice if missing in items (for old invoices)
+        const allMedicines = await Medicine.find({}, { medicineId: 1, buyPrice: 1 }).lean();
+        const medicineCostMap = {};
+        allMedicines.forEach(m => medicineCostMap[m.medicineId] = m.buyPrice || 0);
+
+        allInvoices.forEach(inv => {
+            revenue += (inv.totalAmount || 0);
+            if (inv.items && Array.isArray(inv.items)) {
+                inv.items.forEach(item => {
+                    qtySold += (item.quantity || 0);
+                    // Verify if we should calculate global stats cost here too? 
+                    // The user asked about "Payments Page" which is separate. 
+                    // But "get-dashboard-stats" uses this block.
+                    // The request is about "Payment Report Page". 
+                });
+            }
+        });
+
         return {
             totalMedicines,
             totalGroups,
             shortageCount,
             suppliers: totalSuppliers,
-            // Placeholders
-            revenue: 0,
-            qtySold: 0,
-            invoices: 0,
-            users: 0,
-            customers: 0
+            revenue,
+            qtySold,
+            invoices: allInvoices.length,
+            users: await User.countDocuments({}),
+            customers: await Customer.countDocuments({})
         };
     },
     'get-medicines': async () => {
@@ -279,10 +305,75 @@ const handlers = {
             return { success: false, error: error.message };
         }
     },
+    'get-notifications': async () => {
+        try {
+            const notifications = [];
+
+            // 1. Low Stock Alerts
+            const shortages = await Medicine.find({ stock: { $lt: 30 } }).limit(20).lean();
+            shortages.forEach(med => {
+                notifications.push({
+                    id: `shortage-${med._id}`,
+                    type: 'warning',
+                    title: 'کمبود موجودی',
+                    message: `دوا ${med.name} رو به اتمام است (موجودی: ${med.stock})`,
+                    time: med.updatedAt || new Date(),
+                    link: '/inventory/medicines'
+                });
+            });
+
+            // 2. Recent Sales
+            const recentSales = await Invoice.find({}).sort({ createdAt: -1 }).limit(5).lean();
+            recentSales.forEach(inv => {
+                notifications.push({
+                    id: `sale-${inv._id}`,
+                    type: 'success',
+                    title: 'فروش جدید',
+                    message: `فکتور #${inv.invoiceNumber} به مبلغ ${inv.totalAmount} ثبت شد.`,
+                    time: inv.createdAt,
+                    link: '/sales/list'
+                });
+            });
+
+            return JSON.parse(JSON.stringify(notifications.sort((a, b) => new Date(b.time) - new Date(a.time))));
+        } catch (error) {
+            return [];
+        }
+    },
+    'update-customer': async (event, data) => {
+        try {
+            const { _id, ...updateData } = data;
+            const updatedCustomer = await Customer.findByIdAndUpdate(
+                _id,
+                updateData,
+                { new: true, runValidators: true }
+            );
+            return { success: true, customer: JSON.parse(JSON.stringify(updatedCustomer)) };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    },
+    'delete-customer': async (event, customerId) => {
+        try {
+            await Customer.findByIdAndDelete(customerId);
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    },
+    'get-users': async () => {
+        try {
+            const users = await User.find({}, { password: 0 }).sort({ username: 1 }).lean();
+            return JSON.parse(JSON.stringify(users));
+        } catch (error) {
+            return [];
+        }
+    },
 
     // Invoice Handlers
     'get-invoices': async () => {
         try {
+            // Sort by createdAt desc
             const invoices = await Invoice.find({}).sort({ createdAt: -1 }).lean();
             return JSON.parse(JSON.stringify(invoices));
         } catch (error) {
@@ -310,7 +401,8 @@ const handlers = {
                 data.invoiceNumber = `INV-${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}-${(count + 1).toString().padStart(4, '0')}`;
             }
 
-            // 2. Decrease Stock for each item
+            // 2. Decrease Stock for each item & Get Buy Price
+            const enrichedItems = [];
             for (const item of data.items) {
                 const medicine = await Medicine.findOne({ medicineId: item.medicineId }).session(session);
                 if (!medicine) throw new Error(`Medicine ${item.name} not found`);
@@ -318,10 +410,20 @@ const handlers = {
 
                 medicine.stock -= item.quantity;
                 await medicine.save({ session });
+
+                enrichedItems.push({
+                    ...item,
+                    buyPrice: medicine.buyPrice || 0 // Store historical cost
+                });
             }
 
             // 3. Create Invoice
-            const invoiceResults = await Invoice.create([data], { session });
+            const invoiceData = {
+                ...data,
+                items: enrichedItems,
+                createdBy: data.createdBy || 'admin'
+            };
+            const invoiceResults = await Invoice.create([invoiceData], { session });
             const savedInvoice = invoiceResults[0];
 
             // 4. Update/Create Customer if needed
@@ -348,6 +450,163 @@ const handlers = {
             return JSON.parse(JSON.stringify(invoice));
         } catch (error) {
             return null;
+        }
+    },
+    'delete-user': async (event, userId) => {
+        try {
+            if (!userId) return { success: false, error: 'User ID is required' };
+            await User.findByIdAndDelete(userId);
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    },
+    'get-settings': async () => {
+        try {
+            const Settings = require('./models/Settings');
+            const settings = await Settings.findOne();
+            if (settings) {
+                return JSON.parse(JSON.stringify(settings));
+            } else {
+                const newSettings = await Settings.create({});
+                return JSON.parse(JSON.stringify(newSettings));
+            }
+        } catch (error) {
+            console.error('get-settings error:', error);
+            // Return defaults if DB fails or model missing
+            return {
+                pharmacyName: 'Sheen Pharma',
+                address: '',
+                phone: '',
+                email: '',
+                currency: 'AFN',
+                taxRate: 0,
+                receiptFooter: 'Thanks for your visit!'
+            };
+        }
+    },
+    'update-settings': async (event, data) => {
+        try {
+            const Settings = require('./models/Settings');
+            // Assuming single settings document logic: update any existing or create
+            // Since we don't have ID, we use findOneAndUpdate on empty filter
+            const settings = await Settings.findOneAndUpdate({}, data, { new: true, upsert: true });
+            return { success: true, settings: JSON.parse(JSON.stringify(settings)) };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    },
+    'backup-data': async () => {
+        try {
+            const medicines = await Medicine.find({}).lean();
+            const invoices = await Invoice.find({}).lean();
+            const customers = await Customer.find({}).lean();
+            const suppliers = await Supplier.find({}).lean();
+            const groups = await Group.find({}).lean();
+
+            const backup = {
+                medicines,
+                invoices,
+                customers,
+                suppliers,
+                groups,
+                timestamp: new Date().toISOString()
+            };
+
+            return { success: true, data: JSON.stringify(backup, null, 2) };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    },
+
+    // Chat Handlers
+    'get-chats': async () => {
+        try {
+            const chats = await VisitorChat.find({}).sort({ lastMessageTime: -1 }).lean();
+            return JSON.parse(JSON.stringify(chats));
+        } catch (error) {
+            console.error('get-chats error:', error);
+            return [];
+        }
+    },
+    'send-message': async (event, { visitorId, text, sender }) => {
+        try {
+            const chat = await VisitorChat.findOne({ visitorId });
+            if (!chat) return { success: false, error: 'Chat not found' };
+
+            const newMessage = {
+                sender,
+                text,
+                timestamp: new Date(),
+                read: sender === 'admin'
+            };
+
+            chat.messages.push(newMessage);
+            chat.lastMessage = text;
+            chat.lastMessageTime = new Date();
+            if (sender === 'visitor') {
+                chat.unreadCount += 1;
+            }
+
+            await chat.save();
+            return { success: true, chat: JSON.parse(JSON.stringify(chat)) };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    },
+    'mark-chat-read': async (event, visitorId) => {
+        try {
+            await VisitorChat.findOneAndUpdate(
+                { visitorId },
+                { $set: { unreadCount: 0, 'messages.$[].read': true } }
+            );
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
+    },
+    'seed-chats': async () => {
+        try {
+            const count = await VisitorChat.countDocuments();
+            if (count > 0) return { success: true, message: 'Already seeded' };
+
+            const sampleChats = [
+                {
+                    visitorName: 'احمد رسولی',
+                    visitorId: 'v1',
+                    status: 'online',
+                    location: 'Kabul, AF',
+                    device: 'Chrome / Windows',
+                    lastMessage: 'سلام، آیا داروی آموکسی سیلین موجود دارید؟',
+                    lastMessageTime: new Date(Date.now() - 1000 * 60 * 5),
+                    unreadCount: 1,
+                    messages: [
+                        { sender: 'visitor', text: 'سلام، وقت بخیر', timestamp: new Date(Date.now() - 1000 * 60 * 10) },
+                        { sender: 'admin', text: 'سلام، خوش آمدید. چطور می‌توانم کمک‌تان کنم؟', timestamp: new Date(Date.now() - 1000 * 60 * 8) },
+                        { sender: 'visitor', text: 'سلام، آیا داروی آموکسی سیلین موجود دارید؟', timestamp: new Date(Date.now() - 1000 * 60 * 5) }
+                    ]
+                },
+                {
+                    visitorName: 'مریم ابراهیمی',
+                    visitorId: 'v2',
+                    status: 'offline',
+                    location: 'Herat, AF',
+                    device: 'Safari / iPhone',
+                    lastMessage: 'تشکر از راهنمایی‌تان.',
+                    lastMessageTime: new Date(Date.now() - 1000 * 60 * 60),
+                    unreadCount: 0,
+                    messages: [
+                        { sender: 'visitor', text: 'قیمت شربت سرفه چقدر است؟', timestamp: new Date(Date.now() - 1000 * 60 * 70) },
+                        { sender: 'admin', text: 'قیمت آن ۱۵۰ افغانی می‌باشد.', timestamp: new Date(Date.now() - 1000 * 60 * 65) },
+                        { sender: 'visitor', text: 'تشکر از راهنمایی‌تان.', timestamp: new Date(Date.now() - 1000 * 60 * 60) }
+                    ]
+                }
+            ];
+
+            await VisitorChat.insertMany(sampleChats);
+            return { success: true, message: 'Sample chats seeded' };
+        } catch (error) {
+            return { success: false, error: error.message };
         }
     }
 };

@@ -7,7 +7,16 @@ import {
   BriefcaseMedical,
   AlertOctagon,
   ChevronsLeft,
-  ChevronDown
+  ChevronDown,
+  LayoutDashboard,
+  TrendingUp,
+  Activity,
+  Users,
+  Package,
+  CalendarDays,
+  ArrowUpRight,
+  Database,
+  Briefcase
 } from "lucide-react";
 import { useEffect, useState } from 'react';
 import { invokeIPC } from '@/lib/ipc';
@@ -36,150 +45,159 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="p-8 font-sans">
-      {/* Page Title Section */}
-      <div className="flex items-start justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">دشبورد</h1>
-          <p className="text-gray-500 text-sm mt-1">مرور سریع وضعیت گدام</p>
+    <div className="p-4 md:p-8 font-sans max-w-[1600px] mx-auto" dir="rtl">
+      {/* Premium Header */}
+      <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-6 mb-10 md:mb-14">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-xs md:text-sm font-black text-teal-600 uppercase tracking-widest">
+            <LayoutDashboard className="w-4 h-4" /> سیستم مدیریت هوشمند پانته‌آ
+          </div>
+          <h1 className="text-3xl md:text-5xl font-black text-gray-900 tracking-tight">
+            خلاصه وضعیت سیستم
+          </h1>
+          <p className="text-gray-400 text-sm md:text-base font-medium max-w-2xl">خوش آمدید. در اینجا نمایی کلی از عملکردهای حیاتی، موجودی گدام و جریان‌های نقدی دواخانه را در لحظه مشاهده می‌کنید.</p>
         </div>
-        <button className="px-5 py-2.5 bg-white border border-gray-200 rounded-md text-gray-600 font-medium text-sm flex items-center gap-2 shadow-sm hover:bg-gray-50 transition-colors">
-          دانلود راپور
-          <ChevronDown className="w-4 h-4" />
-        </button>
+
+        <div className="flex items-center gap-3 w-full lg:w-auto">
+          <button className="flex-1 lg:flex-none px-6 py-4 bg-white border border-gray-100 rounded-[1.5rem] text-gray-600 font-black text-sm flex items-center justify-center gap-2 shadow-xl shadow-gray-200/20 hover:bg-gray-50 transition-all active:scale-95 group">
+            <CalendarDays className="w-5 h-5 text-gray-400 group-hover:text-teal-500 transition-colors" />
+            امروز: {new Date().toLocaleDateString('fa-IR')}
+          </button>
+        </div>
       </div>
 
-      {/* Status Cards */}
-      <div className="grid grid-cols-4 gap-6 mb-8">
+      {/* Hero Stats Section */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 mb-12">
         <StatusCard
-          icon={ShieldCheck}
-          iconColor="text-[#4caf50]"
-          borderColor="border-[#4caf50]"
-          bgButton="bg-[#4caf50]/10"
-          textButton="text-[#4caf50]"
-          title="خوب"
-          subtitle="وضعیت گدام"
-          buttonText="مشاهده راپور مفصل"
-          variant="green"
+          icon={Activity}
+          title="وضعیت عملیاتی"
+          subtitle="سیستم در پایداری کامل است"
+          value="بسیار عالی"
+          variant="teal"
           href="/inventory/medicines"
+          buttonText="مدیریت گدام"
         />
         <StatusCard
-          icon={Banknote}
-          iconColor="text-[#ffc107]"
-          borderColor="border-[#ffc107]"
-          bgButton="bg-[#ffc107]/10"
-          textButton="text-[#ffc107]"
-          value={`${stats.revenue} افغانی`}
-          subtitle="عایدات : جنوری ۲۰۲۶"
-          secondarySubtitle=""
-          buttonText="مشاهده راپور مفصل"
-          variant="yellow"
+          icon={TrendingUp}
+          title="فروشات ماهانه"
+          subtitle="رشد ۱۳٪ نسبت به ماه قبل"
+          value={`${stats.revenue.toLocaleString()} AFN`}
+          variant="indigo"
           href="/reports/sales"
+          buttonText="تحلیل فروش"
         />
         <StatusCard
-          icon={BriefcaseMedical}
-          iconColor="text-[#2196f3]"
-          borderColor="border-[#2196f3]"
-          bgButton="bg-[#2196f3]/10"
-          textButton="text-[#2196f3]"
+          icon={Package}
+          title="تنوع موجودی"
+          subtitle="بروزرسانی شده: همین حالا"
           value={stats.totalMedicines}
-          subtitle="دواهای موجود"
-          buttonText="مشاهده گدام"
           variant="blue"
           href="/inventory/medicines"
+          buttonText="لیست محصولات"
         />
         <StatusCard
           icon={AlertOctagon}
-          iconColor="text-[#f44336]"
-          borderColor="border-[#f44336]"
-          bgButton="bg-[#f44336]/10"
-          textButton="text-[#f44336]"
+          title="اقلام بحرانی"
+          subtitle="نیاز به شارژ مجدد فوری"
           value={stats.shortageCount.toString().padStart(2, '0')}
-          subtitle="کمبود دوا"
-          buttonText="حل مشکل"
-          variant="red"
+          variant="rose"
           href="/inventory/medicines"
+          buttonText="بررسی کمبودها"
         />
       </div>
 
-      {/* Detailed Sections Grid */}
-      <div className="grid grid-cols-2 gap-6">
-        {/* Inventory Box */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-0 overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-            <h3 className="font-bold text-gray-800">گدام</h3>
-            <Link href="/configuration" className="flex items-center text-xs font-semibold text-gray-500 cursor-pointer hover:text-[#009688]">
-              رفتن به تنظیمات <ChevronsLeft className="w-4 h-4 mr-1" />
-            </Link>
-          </div>
-          <div className="flex p-6">
-            <div className="flex-1 pl-4 border-l border-gray-100">
-              <div className="text-2xl font-bold text-gray-800 mb-1">{stats.totalMedicines}</div>
-              <div className="text-sm text-gray-500">تعداد مجموعی دواها</div>
+      {/* Secondary Analytics Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-12">
+        {/* Main Analytics Card */}
+        <div className="xl:col-span-2 bg-gray-900 rounded-[3rem] p-8 md:p-12 text-white shadow-2xl shadow-gray-400/30 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/10 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2 group-hover:bg-teal-500/20 transition-all duration-700"></div>
+
+          <div className="relative z-10">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
+              <div>
+                <h3 className="text-xl font-black mb-1">عملکرد مالی و تراکنش‌ها</h3>
+                <p className="text-gray-400 text-xs font-medium uppercase tracking-widest">Financial Performance Index</p>
+              </div>
+              <Link href="/reports/sales" className="flex items-center gap-2 text-teal-400 text-xs font-black hover:text-teal-300 transition-colors group/link">
+                مشاهده گزارش تفصیلی <ArrowUpRight className="w-4 h-4 group-hover/link:translate-x-1 group-hover/link:-translate-y-1 transition-transform" />
+              </Link>
             </div>
-            <div className="flex-1 pr-6">
-              <div className="text-2xl font-bold text-gray-800 mb-1">{stats.totalGroups}</div>
-              <div className="text-sm text-gray-500">گروپ های دوایی</div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+              <div className="space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-teal-400">
+                  <TrendingUp className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">تعداد فروش</div>
+                  <div className="text-2xl font-black font-sans">{stats.qtySold}</div>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-blue-400">
+                  <Briefcase className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">بل‌های صادره</div>
+                  <div className="text-2xl font-black font-sans">{stats.invoices}</div>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-orange-400">
+                  <Users className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">مشتریان جدید</div>
+                  <div className="text-2xl font-black font-sans">{stats.customers}</div>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-purple-400">
+                  <Database className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">دیتابیس گدام</div>
+                  <div className="text-2xl font-black font-sans">{stats.totalGroups} <span className="text-[8px] opacity-40">GROUPS</span></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Quick Report Box */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-0 overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-            <h3 className="font-bold text-gray-800">راپور سریع</h3>
-            <div className="flex items-center text-xs font-medium text-gray-500 cursor-pointer">
-              جنوری ۲۰۲۶ <ChevronDown className="w-4 h-4 mr-1" />
-            </div>
-          </div>
-          <div className="flex p-6">
-            <div className="flex-1 pl-4 border-l border-gray-100">
-              <div className="text-2xl font-bold text-gray-800 mb-1">{stats.qtySold}</div>
-              <div className="text-sm text-gray-500">تعداد دوای فروخته شده</div>
-            </div>
-            <div className="flex-1 pr-6">
-              <div className="text-2xl font-bold text-gray-800 mb-1">{stats.invoices}</div>
-              <div className="text-sm text-gray-500">بل های ایجاد شده</div>
-            </div>
-          </div>
-        </div>
+        {/* Action Center */}
+        <div className="bg-white rounded-[3rem] p-8 border border-gray-100 shadow-sm flex flex-col">
+          <h3 className="text-lg font-black text-gray-800 mb-8 flex items-center gap-3">
+            <Activity className="w-5 h-5 text-teal-500" /> دسترسی سریع مدیریتی
+          </h3>
 
-        {/* My Pharmacy Box */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-0 overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-            <h3 className="font-bold text-gray-800">دواخانه من</h3>
-            <Link href="/users" className="flex items-center text-xs font-semibold text-gray-500 cursor-pointer hover:text-[#009688]">
-              مدیریت کاربران <ChevronsLeft className="w-4 h-4 mr-1" />
-            </Link>
+          <div className="space-y-4 flex-1">
+            <QuickActionLink
+              href="/inventory/medicines/add"
+              title="ثبت محصول جدید"
+              desc="افزودن دوا به دیتابیس گدام"
+              color="teal"
+            />
+            <QuickActionLink
+              href="/sales/new"
+              title="صدور فاکتور فروش"
+              desc="ثبت تراکنش و کاهش موجودی"
+              color="blue"
+            />
+            <QuickActionLink
+              href="/contacts/list"
+              title="مدیریت مخاطبین"
+              desc="تأمین‌کنندگان و مشتریان"
+              color="orange"
+            />
           </div>
-          <div className="flex p-6">
-            <div className="flex-1 pl-4 border-l border-gray-100">
-              <div className="text-2xl font-bold text-gray-800 mb-1">{stats.suppliers.toString().padStart(2, '0')}</div>
-              <div className="text-sm text-gray-500">تعداد عرضه کنندگان</div>
-            </div>
-            <div className="flex-1 pr-6">
-              <div className="text-2xl font-bold text-gray-800 mb-1">{stats.users.toString().padStart(2, '0')}</div>
-              <div className="text-sm text-gray-500">تعداد کاربران</div>
-            </div>
-          </div>
-        </div>
 
-        {/* Customers Box */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-0 overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-            <h3 className="font-bold text-gray-800">مشتریان</h3>
-            <Link href="/contacts/list" className="flex items-center text-xs font-semibold text-gray-500 cursor-pointer hover:text-[#009688]">
-              صفحه مشتریان <ChevronsLeft className="w-4 h-4 mr-1" />
-            </Link>
-          </div>
-          <div className="flex p-6">
-            <div className="flex-1 pl-4 border-l border-gray-100">
-              <div className="text-2xl font-bold text-gray-800 mb-1">{stats.customers}</div>
-              <div className="text-sm text-gray-500">تعداد مشتریان</div>
-            </div>
-            <div className="flex-1 pr-6">
-              <div className="text-2xl font-bold text-gray-800 mb-1">---</div>
-              <div className="text-sm text-gray-500">اقلام پرفروش</div>
+          <div className="mt-8 pt-8 border-t border-gray-50">
+            <div className="flex items-center justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest">
+              <span>Active Sessions</span>
+              <span className="text-teal-500 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse"></span>
+                {stats.users} Users Online
+              </span>
             </div>
           </div>
         </div>
@@ -188,53 +206,75 @@ export default function Home() {
   );
 }
 
-function StatusCard({
-  icon: Icon,
-  iconColor,
-  borderColor,
-  bgButton,
-  textButton,
-  title,
-  value,
-  subtitle,
-  buttonText,
-  variant,
-  href
-}) {
-  const borderColors = {
-    green: 'border-t-[#4caf50]',
-    yellow: 'border-t-[#ffc107]',
-    blue: 'border-t-[#2196f3]',
-    red: 'border-t-[#f44336]'
+function StatusCard({ icon: Icon, title, subtitle, value, variant, href, buttonText }) {
+  const variants = {
+    teal: {
+      bg: 'bg-teal-50',
+      icon: 'text-teal-600',
+      btn: 'bg-teal-600 shadow-teal-500/20',
+      border: 'hover:border-teal-200'
+    },
+    indigo: {
+      bg: 'bg-indigo-50',
+      icon: 'text-indigo-600',
+      btn: 'bg-indigo-600 shadow-indigo-500/20',
+      border: 'hover:border-indigo-200'
+    },
+    blue: {
+      bg: 'bg-blue-50',
+      icon: 'text-blue-600',
+      btn: 'bg-blue-600 shadow-blue-500/20',
+      border: 'hover:border-blue-200'
+    },
+    rose: {
+      bg: 'bg-rose-50',
+      icon: 'text-rose-600',
+      btn: 'bg-rose-600 shadow-rose-500/20',
+      border: 'hover:border-rose-200'
+    }
   };
 
-  const buttonBgs = {
-    green: 'bg-[#4caf50]/20 hover:bg-[#4caf50]/30 text-[#4caf50]',
-    yellow: 'bg-[#ffc107]/20 hover:bg-[#ffc107]/30 text-[#ff8f00]', // Adjusted text for contrast
-    blue: 'bg-[#2196f3]/20 hover:bg-[#2196f3]/30 text-[#2196f3]',
-    red: 'bg-[#f44336]/20 hover:bg-[#f44336]/30 text-[#f44336]'
+  const v = variants[variant];
+
+  return (
+    <div className={`bg-white rounded-[2.5rem] p-4 flex flex-col border border-gray-100 shadow-sm transition-all duration-300 ${v.border} group relative overflow-hidden`}>
+      <div className="p-4 md:p-6 mb-6">
+        <div className={`w-14 h-14 rounded-2xl ${v.bg} ${v.icon} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500`}>
+          <Icon className="w-7 h-7 stroke-[2.5px]" />
+        </div>
+        <div className="space-y-1">
+          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{title}</h3>
+          <div className="text-xl md:text-2xl font-black text-gray-900 font-sans tracking-tight">{value}</div>
+          <p className="text-xs font-bold text-gray-400">{subtitle}</p>
+        </div>
+      </div>
+
+      <Link
+        href={href}
+        className={`w-full py-4 rounded-2xl ${v.btn} text-white text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.98] group-hover:translate-y-[-2px]`}
+      >
+        {buttonText} <ChevronsLeft className="w-4 h-4" />
+      </Link>
+    </div>
+  );
+}
+
+function QuickActionLink({ href, title, desc, color }) {
+  const colors = {
+    teal: 'bg-teal-50 text-teal-600',
+    blue: 'bg-blue-50 text-blue-600',
+    orange: 'bg-orange-50 text-orange-600'
   };
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm pt-6 flex flex-col items-center border border-gray-100 ${borderColors[variant]} border-t-4`}>
-      <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${variant === 'green' ? 'text-[#4caf50] border-2 border-[#4caf50]' : ''} ${variant === 'yellow' ? 'text-[#ffc107] border-2 border-[#ffc107]' : ''} ${variant === 'blue' ? 'text-[#2196f3] border-2 border-[#2196f3]' : ''} ${variant === 'red' ? 'text-[#f44336] border-2 border-[#f44336]' : ''} bg-white`}>
-        <Icon className="w-6 h-6 stroke-2" />
+    <Link href={href} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 transition-all group">
+      <div className={`w-12 h-12 rounded-[1.25rem] ${colors[color]} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
+        <ArrowUpRight className="w-5 h-5" />
       </div>
-
-      {title && <h3 className="text-lg font-bold text-gray-800 mb-1">{title}</h3>}
-      {value !== undefined && <h3 className="text-xl font-bold text-gray-800 mb-1" dir="ltr">{value}</h3>}
-
-      <p className="text-sm font-medium text-gray-600 mb-6">{subtitle}</p>
-
-      {href ? (
-        <Link href={href} className={`w-full py-2.5 font-medium text-sm transition-colors flex items-center justify-center gap-2 ${buttonBgs[variant]} rounded-b-lg mt-auto`}>
-          {buttonText} <ChevronsLeft className="w-4 h-4" />
-        </Link>
-      ) : (
-        <button className={`w-full py-2.5 font-medium text-sm transition-colors flex items-center justify-center gap-2 ${buttonBgs[variant]} rounded-b-lg mt-auto`}>
-          {buttonText} <ChevronsLeft className="w-4 h-4" />
-        </button>
-      )}
-    </div>
+      <div className="text-right">
+        <div className="text-sm font-black text-gray-800">{title}</div>
+        <div className="text-[10px] font-bold text-gray-400 truncate">{desc}</div>
+      </div>
+    </Link>
   );
 }

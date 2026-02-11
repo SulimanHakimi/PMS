@@ -6,7 +6,8 @@ export async function invokeIPC(channel, data) {
         'add-medicine', 'update-medicine', 'delete-medicine',
         'add-group', 'delete-group',
         'add-supplier', 'update-supplier', 'delete-supplier',
-        'add-customer', 'create-invoice'
+        'add-customer', 'create-invoice',
+        'send-message', 'mark-chat-read'
     ];
 
     // 1. Try Electron IPC

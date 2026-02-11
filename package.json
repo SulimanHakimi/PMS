@@ -12,13 +12,14 @@
     "dist": "node scripts/build-electron.js && electron-builder"
   },
   "build": {
-    "appId": "com.sheen.pms",
-    "productName": "Pharma One PMS",
+    "appId": "com.sheenpharma.pms",
+    "productName": "Sheen Pharma PMS",
     "directories": {
       "output": "dist"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "build/icon.png"
     },
     "files": [
       "electron/**/*",

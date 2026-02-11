@@ -1,6 +1,6 @@
 'use client';
 
-import { Edit, ChevronsLeft, Trash2 } from 'lucide-react';
+import { Edit, ChevronLeft, Trash2, Database } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
@@ -40,107 +40,140 @@ function MedicineDetailContent() {
         }
     };
 
-    if (loading) return <div className="p-8 font-sans text-right">در حال بارگزاری...</div>;
-    if (!medicine) return <div className="p-8 font-sans text-right">دوا پیدا نشد</div>;
+    if (loading) return (
+        <div className="flex items-center justify-center h-[60vh]">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500"></div>
+        </div>
+    );
+
+    if (!medicine) return (
+        <div className="p-8 text-center bg-white rounded-3xl m-8 border border-gray-100 shadow-sm">
+            <h2 className="text-xl font-black text-gray-800">دوا پیدا نشد</h2>
+            <Link href="/inventory/medicines" className="text-teal-600 font-bold mt-4 inline-block">بازگشت به لست</Link>
+        </div>
+    );
 
     return (
-        <div className="p-8 font-sans">
+        <div className="p-4 md:p-8 font-sans max-w-6xl mx-auto" dir="rtl">
             {/* Header */}
-            <div className="flex justify-between items-start mb-8">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 md:mb-12">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                        گدام <span className="text-gray-400">›</span> لیست دواها <span className="text-gray-400">›</span> {medicine.name}
+                    <div className="flex items-center gap-2 text-xs md:text-sm font-black text-teal-600 uppercase tracking-widest mb-2">
+                        اطلاعات تکمیلی محصول
+                    </div>
+                    <h1 className="text-2xl md:text-4xl font-black text-gray-800 tracking-tight flex items-center gap-3">
+                        {medicine.name}
+                        <span className="text-gray-300 font-normal text-xl">/</span>
+                        <span className="text-gray-400 font-black text-xl font-sans uppercase">{medicine.medicineId}</span>
                     </h1>
-                    <p className="text-gray-500 text-sm mt-1">لیست دواهای موجود برای فروش.</p>
                 </div>
-                <Link
-                    href={`/inventory/medicines/edit?id=${medicine.medicineId}`}
-                    className="bg-[#2196f3] hover:bg-[#1976d2] text-white px-6 py-2.5 rounded shadow-sm flex items-center gap-2 text-sm font-medium transition-colors"
-                >
-                    <Edit className="w-4 h-4" />
-                    ویرایش جزئیات
-                </Link>
+
+                <div className="flex gap-3 w-full md:w-auto">
+                    <Link
+                        href={`/inventory/medicines/edit?id=${medicine.medicineId}`}
+                        className="flex-1 md:flex-none justify-center bg-white border border-gray-100 hover:border-teal-500 hover:text-teal-600 text-gray-600 px-6 py-4 rounded-2xl shadow-sm flex items-center gap-2 text-sm font-black transition-all active:scale-95"
+                    >
+                        <Edit className="w-5 h-5" />
+                        ویرایش محتوا
+                    </Link>
+                    <button
+                        onClick={handleDelete}
+                        disabled={deleting}
+                        className="flex-1 md:flex-none justify-center bg-red-50 text-red-600 hover:bg-red-600 hover:text-white px-6 py-4 rounded-2xl flex items-center gap-2 text-sm font-black transition-all active:scale-95 disabled:opacity-50"
+                    >
+                        <Trash2 className="w-5 h-5" />
+                        {deleting ? '...' : 'حذف ریکورد'}
+                    </button>
+                </div>
             </div>
 
-            {/* Info Cards Grid */}
-            <div className="grid grid-cols-2 gap-6 mb-8">
-                {/* Medicine Info */}
-                <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-                    <h3 className="font-bold text-gray-800 mb-6 pb-2 border-b border-gray-100 text-right">معلومات دوا</h3>
-                    <div className="space-y-4">
-                        <div className="flex flex-row-reverse">
-                            <div className="flex-1 text-right">
-                                <div className="text-2xl font-bold text-gray-800 mb-1">{medicine.medicineId}</div>
-                                <div className="text-sm text-gray-500">آیدی دوا</div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+                {/* Left Side: Stats & Info Cards */}
+                <div className="lg:col-span-2 space-y-6 md:space-y-8">
+                    {/* Primary Info Card */}
+                    <div className="bg-white rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/20 p-6 md:p-10">
+                        <h3 className="text-base md:text-lg font-black text-gray-800 mb-8 border-b border-gray-50 pb-4">مشخصات کلیدی و برندینگ</h3>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 md:gap-12">
+                            <div className="space-y-2 text-right">
+                                <label className="text-[10px] uppercase font-black text-gray-400 tracking-widest">عرضه کننده محصول</label>
+                                <div className="text-xl font-black text-gray-800">{medicine.supplier || 'توزیع‌کننده ناشناخته'}</div>
+                                <div className="inline-flex px-3 py-1 bg-teal-50 text-teal-600 rounded-full text-[10px] font-black uppercase tracking-tight">Verified Source</div>
                             </div>
-                            <div className="flex-1 text-right">
-                                <div className="text-2xl font-bold text-gray-800 mb-1">{medicine.group}</div>
-                                <div className="text-sm text-gray-500">گروپ دوا</div>
+
+                            <div className="space-y-2 text-right">
+                                <label className="text-[10px] uppercase font-black text-gray-400 tracking-widest">دسته بندی دارویی</label>
+                                <div className="text-xl font-black text-gray-800">{medicine.group}</div>
+                                <div className="inline-flex px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-tight">Medical Library</div>
                             </div>
                         </div>
-                        <div className="pt-4 border-t border-gray-100 flex flex-row-reverse gap-4">
-                            <div className="flex-1 text-right">
-                                <div className="text-xl font-bold mb-1">{medicine.supplier || 'نامشخص'}</div>
-                                <div className="text-sm text-gray-500">عرضه کننده</div>
+
+                        <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-6 pt-10 border-t border-gray-50">
+                            <div className="p-6 bg-gray-50 rounded-2xl space-y-1">
+                                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">خرید فکتور</span>
+                                <div className="text-xl font-black text-gray-800 font-sans">{medicine.buyPrice} <small className="text-[10px] opacity-40 uppercase">Afn</small></div>
                             </div>
-                            <div className="flex-1 text-right">
-                                <div className="text-xl font-bold text-gray-800 mb-1">{medicine.buyPrice} afn</div>
-                                <div className="text-sm text-gray-500">قیمت خرید</div>
+                            <div className="p-6 bg-teal-50 rounded-2xl space-y-1">
+                                <span className="text-[9px] font-black text-teal-600 uppercase tracking-widest">فروش نهایی</span>
+                                <div className="text-xl font-black text-teal-700 font-sans">{medicine.sellPrice} <small className="text-[10px] opacity-40 uppercase">Afn</small></div>
                             </div>
-                            <div className="flex-1 text-right">
-                                <div className="text-xl font-bold text-teal-600 mb-1">{medicine.sellPrice} afn</div>
-                                <div className="text-sm text-gray-500">قیمت فروش</div>
+                            <div className="p-6 bg-gray-900 rounded-2xl space-y-1">
+                                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">تفاوت سود</span>
+                                <div className="text-xl font-black text-green-400 font-sans">+{medicine.sellPrice - medicine.buyPrice} <small className="text-[10px] opacity-40 uppercase">Afn</small></div>
                             </div>
                         </div>
                     </div>
+
+                    {/* Description Card */}
+                    <div className="bg-white rounded-[2rem] border border-gray-100 p-6 md:p-10">
+                        <h3 className="text-base md:text-lg font-black text-gray-800 mb-4">توضیحات و کاربرد</h3>
+                        <p className="text-sm md:text-base text-gray-500 leading-loose text-right font-medium">
+                            {medicine.description || 'برای این محصول هنوز توضیحاتی درج نشده است. توضیحات دقیق به پروسه تشخیص سریع‌تر توسط داکتر و فارمسست کمک می‌کند.'}
+                        </p>
+                    </div>
                 </div>
 
-                {/* Inventory Info */}
-                <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 overflow-hidden relative">
-                    <div className="flex justify-between items-center mb-6 pb-2 border-b border-gray-100">
-                        <h3 className="font-bold text-gray-800">موجودی گدام</h3>
-                        <button className="text-xs font-semibold text-gray-500 flex items-center hover: transition-colors">
-                            ارسال درخواست موجودی <ChevronsLeft className="w-4 h-4 mr-1" />
+                {/* Right Side: Inventory Status Card */}
+                <div className="space-y-6">
+                    <div className="bg-gradient-to-br from-teal-600 to-teal-800 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-teal-500/30 overflow-hidden relative group">
+                        <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
+
+                        <div className="relative z-10 flex flex-col items-center text-center">
+                            <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mb-6">
+                                <Database className="w-8 h-8 text-teal-100" />
+                            </div>
+                            <p className="text-[10px] font-black uppercase tracking-[4px] mb-2 opacity-60">Current Inventory</p>
+                            <div className="text-6xl font-black font-sans mb-4 tracking-tighter">
+                                {medicine.stock}
+                                <span className="text-xl font-medium ml-2 opacity-40 leading-none">PCS</span>
+                            </div>
+                            <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ${medicine.stock < 10 ? 'bg-red-500 shadow-lg shadow-red-500/20' : 'bg-green-500 shadow-lg shadow-green-500/20'}`}>
+                                {medicine.stock < 10 ? 'Critically Low' : 'Adequate Supply'}
+                            </div>
+                        </div>
+
+                        <div className="relative z-10 mt-10 pt-8 border-t border-white/10 space-y-4">
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="font-bold opacity-60">مجموع دریافتی</span>
+                                <span className="font-black font-sans tracking-wide">450 <small className="opacity-40">pcs</small></span>
+                            </div>
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="font-bold opacity-60">فروخته شده</span>
+                                <span className="font-black font-sans tracking-wide">152 <small className="opacity-40">pcs</small></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Quick Link Card */}
+                    <div className="bg-white rounded-3xl border border-gray-100 p-6 space-y-3">
+                        <button className="w-full justify-between px-6 py-4 bg-gray-50 hover:bg-teal-50 text-gray-600 hover:text-teal-700 rounded-2xl font-black text-xs transition-all flex items-center group">
+                            تاریخچه ورود و خروج <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                        </button>
+                        <button className="w-full justify-between px-6 py-4 bg-gray-50 hover:bg-teal-50 text-gray-600 hover:text-teal-700 rounded-2xl font-black text-xs transition-all flex items-center group">
+                            چاپ بارکد محصول <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                         </button>
                     </div>
-
-                    <div className="flex justify-between flex-row-reverse">
-                        <div className="flex-1 border-l border-gray-100 last:border-0 pl-4 text-right">
-                            <div className="text-2xl font-bold text-gray-800 mb-1">298</div>
-                            <div className="text-sm text-gray-500">مجموع عرضه</div>
-                        </div>
-                        <div className="flex-1 border-l border-gray-100 last:border-0 px-6 text-right">
-                            <div className="text-2xl font-bold text-gray-800 mb-1">290</div>
-                            <div className="text-sm text-gray-500">مجموع فروش</div>
-                        </div>
-                        <div className="flex-1 pr-6 text-right">
-                            <div className="text-2xl font-bold text-gray-800 mb-1">{medicine.stock}</div>
-                            <div className="text-sm text-gray-500">موجودی فعلی</div>
-                        </div>
-                    </div>
                 </div>
-            </div>
-
-            {/* Description Boxes */}
-            <div className="space-y-6">
-                <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-                    <h3 className="font-bold text-gray-800 mb-4 text-right">توضیحات</h3>
-                    <p className="text-sm text-gray-600 leading-relaxed text-right">
-                        {medicine.description || 'توضیحاتی برای این دوا موجود نیست.'}
-                    </p>
-                </div>
-            </div>
-
-            {/* Delete Button */}
-            <div className="mt-8 flex justify-end">
-                <button
-                    onClick={handleDelete}
-                    disabled={deleting}
-                    className="text-[#f44336] border border-[#f44336] hover:bg-[#f44336] hover:text-white px-6 py-2.5 rounded shadow-sm flex items-center gap-2 text-sm font-medium transition-all disabled:opacity-50"
-                >
-                    <Trash2 className="w-4 h-4" />
-                    {deleting ? 'در حال حذف...' : 'حذف دوا'}
-                </button>
             </div>
         </div>
     );
